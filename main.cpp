@@ -471,7 +471,135 @@ MOVE THEM BELOW this block comment and put them in numerical order
 After you have MOVED your 10 UDTs, send me a DM with your pull request link.
 I will review the pseudo-code that you have written.
 */
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cmath>
 
+class theScale
+{
+    int fundamental;
+    /**********************
+     * 0  => C            *
+     * 1  => C# || Db     *
+     * 2  => D            *
+     * 3  => D# || Eb     *
+     * 4  => E            *
+     * 5  => F            *
+     * 6  => F# || Gb     *
+     * 7  => G            *
+     * 8  => G# || Ab     *
+     * 9  => A            *
+     * 10 => A# || Bb     *
+     * 11 => B            *
+     **********************/
+    std::string modeName;
+    enum modeNames
+    {
+        major,
+        minor
+    };
+    
+    modeNames hashit (std::string const& inString) 
+    {
+        if (inString == "Major") 
+            return major;
+        else if (inString == "Minor") 
+            return minor;
+        else
+            return major;
+    }
+
+    std::vector<int> scalePattern, scaleNotes; /* I am trying to translate from C# List<T> */
+
+    int mod(int x, int m)
+    {
+        return (x % m + m) % m;
+    }
+
+    // Set the scale
+    int getScalePattern(int x)
+    {
+        if (x < 0)
+        {
+            return 0;
+        }
+        else
+        {
+            return scalePattern[x];
+        }
+    }
+    void setScaleNotes()
+    {
+        scaleNotes.clear();
+        int scalePreviousNote = fundamental;
+        for (int i = 0; i < scalePattern.size(); i++)
+        {
+            scaleNotes.push_back(mod(scalePreviousNote + getScalePattern(i - 1), 12));
+            scalePreviousNote = scaleNotes[scaleNotes.size() - 1];
+        }
+    }
+    void setScalePattern()
+    {
+        switch (hashit(modeName))
+        {
+            case major:
+                scalePattern = std::vector<int> { 2, 2, 1, 2, 2, 2, 1 };
+                break;
+            case minor:
+                scalePattern = std::vector<int> { 2, 1, 2, 2, 1, 2, 2 };
+                break;
+            default:
+                std::cout << "Please enter a valid scale mode!" << std::endl;
+                break;
+        }
+    }
+    void setScale()
+    {
+        setScalePattern();
+        setScaleNotes();
+    }
+
+
+    // Note => Degree
+    int noteDegreeToNotePitch(int noteDegree)
+    {
+        return scaleNotes[noteDegree - 1];
+    }
+
+    // Degree => Note
+    int notePitchToNoteDegree(int notePitch)
+    {
+        std::vector<int>::iterator itr = std::find(scaleNotes.begin(), scaleNotes.end(), notePitch);
+        return itr - scaleNotes.begin() + 1;
+        //return scaleNotes.FindIndex(x => x == mod(notePitch, 12)) + 1; // This is how I could write it in C#
+    }
+
+    
+    int addDegreesToNotePitch(int notePitch, int degrees)
+    {
+        int interval = 0;
+        int dir = std::clamp(degrees, -1, 1);
+        int dirOffset = -1 * std::clamp(degrees, -1, 0);
+        for (int i = 0; i < std::abs(degrees); i++)
+        {
+            interval += scalePattern[mod(notePitchToNoteDegree(notePitch) - 1 + (dir * (i + dirOffset)), scalePattern.size())];
+        }
+        interval *= dir;
+        
+        return notePitch + interval;
+    }
+
+
+    bool scaleCheck(int notePitch)
+    {
+        if(std::find(scaleNotes.begin(), scaleNotes.end(), notePitch) != scaleNotes.end())
+            return true;
+        else
+            return false;
+    }
+};
 
 
 
